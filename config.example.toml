@@ -4,3 +4,6 @@ debug = true
 [cqhttp]
 host = "http://127.0.0.1:15700"
 accesstoken = "xxxxxxxx"
+
+[db]
+file = "yeti.db"

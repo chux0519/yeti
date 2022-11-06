@@ -13,7 +13,7 @@ func (h *YetiHandler) EntryHandler(c echo.Context) error {
 		return handlers.NewBadRequestError(err.Error())
 	}
 
-	go handlers.EntryHandler(event, h.CQ)
+	go handlers.EntryHandler(event, h.CQ, h.R)
 
 	return c.JSON(http.StatusOK, "")
 }

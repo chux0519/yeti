@@ -2,65 +2,63 @@ package rank
 
 import (
 	"encoding/json"
-	"fmt"
+	"strings"
+
+	"github.com/chux0519/yeti/pkg/service/sqlite"
+
+	logging "github.com/ipfs/go-log"
 )
 
-type RankData struct {
-	CharacterImageURL  string
-	Class              string
-	ClassRank          int
-	EXP                int64
-	EXPPercent         float64
-	GlobalRanking      int
-	Guild              string
-	LegionLevel        int
-	LegionPower        int
-	LegionRank         int
-	Level              int
-	Name               string
-	Server             string
-	ServerClassRanking int
-	ServerRank         int
-	ServerSlug         string
-	AchievementPoints  int
-	AchievementRank    int
-	GraphData          []GraphDataItem
+var rLog = logging.Logger("rank")
+
+type YetiRankService struct {
+	S *sqlite.YetiSQLiteService
 }
 
-type GraphDataItem struct {
-	AvatarURL        string
-	ClassID          int
-	ClassRankGroupID int
-	CurrentEXP       int64
-	DateLabel        string
-	EXPDifference    int64
-	EXPToNextLevel   int64
-	ImportTime       int64
-	Level            int
-	Name             string
-	ServerID         int
-	ServerMergeID    int
-	TotalOverallEXP  int64
+func NewYetiRankService(s *sqlite.YetiSQLiteService) *YetiRankService {
+	return &YetiRankService{s}
 }
 
-/*
-GetGMSRank get data from maplestory.gg
-*/
-func GetGMSRank(ign string) (*RankData, error) {
-	url := "https://api.maplestory.gg/v1/public/character/gms/" + ign
-	content, err := httpGet(url)
+func (r *YetiRankService) FetchUserRank(ign string) (*RankData, error) {
+	record, err := r.S.GetMapleGGByIGN(ign)
 	if err != nil {
-		fmt.Printf("Failed to get rank: %s", err.Error())
 		return nil, err
 	}
 
-	rank := RankData{}
+	if record != nil && strings.EqualFold(record.IGN, ign) {
+		data := record.Data
+		dBytes, err := json.Marshal(&data)
+		if err != nil {
+			return nil, err
+		}
+		var rank RankData
+		if err := json.Unmarshal(dBytes, &rank); err != nil {
+			return nil, err
+		}
+		return &rank, nil
+	} else {
+		rank, err := GetGMSRank(ign)
+		if err != nil {
+			return nil, err
+		}
 
-	err = json.Unmarshal(content, &rank)
-	if err != nil {
-		fmt.Printf("Failed to decode rank: %s", err.Error())
-		fmt.Printf("data: %s", string(content))
-		return nil, err
+		dBytes, err := json.Marshal(rank)
+		if err != nil {
+			return nil, err
+		}
+
+		var data map[string]interface{}
+		if err := json.Unmarshal(dBytes, &data); err != nil {
+			return nil, err
+		}
+
+		// TODO: fetch the avatar bytes
+		// upsert
+		_, err = r.S.UpsertMapleGG(ign, data, []byte("test"))
+		if err != nil {
+			return nil, err
+		}
+
+		return rank, nil
 	}
-	return &rank, nil
 }

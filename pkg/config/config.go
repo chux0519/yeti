@@ -16,6 +16,10 @@ type ServerConfig struct {
 		Host        string
 		AccessToken string
 	} `mapstructure:",remain"`
+
+	DB struct {
+		File string
+	} `mapstructure:",remain"`
 }
 
 func LoadServerConfig(config string) *ServerConfig {
@@ -46,6 +50,11 @@ func LoadServerConfig(config string) *ServerConfig {
 	err = v.UnmarshalKey("cqhttp", &conf.CQHTTP)
 	if err != nil {
 		confLog.Fatalf("unable to decode cqhttp config into struct, %v", err)
+	}
+
+	err = v.UnmarshalKey("db", &conf.DB)
+	if err != nil {
+		confLog.Fatalf("unable to decode db config into struct, %v", err)
 	}
 
 	return &conf
