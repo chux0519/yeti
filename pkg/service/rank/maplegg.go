@@ -3,6 +3,7 @@ package rank
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 )
 
 type RankData struct {
@@ -13,6 +14,7 @@ type RankData struct {
 	EXPPercent         float64
 	GlobalRanking      int
 	Guild              string
+	LegionCoinsPerDay  *int
 	LegionLevel        int
 	LegionPower        int
 	LegionRank         int
@@ -72,4 +74,47 @@ func GetGMSRankRaw(ign string) ([]byte, error) {
 	}
 
 	return content, nil
+}
+
+// get msg with cq code
+func (rank *RankData) GetRankReplyString() string {
+	var reply string
+
+	reply = fmt.Sprintf("角色：%s \r\n", rank.Name) +
+		fmt.Sprintf("服务器：%s \r\n", rank.Server) +
+		fmt.Sprintf("等级：%d - %.2f%%  (排名 %d )\r\n", rank.Level, rank.EXPPercent, rank.ServerRank) +
+		fmt.Sprintf("职业：%s  (排名 %d )\r\n", rank.Class, rank.ServerClassRanking)
+
+	if rank.LegionCoinsPerDay == nil {
+		reply = reply + "非联盟最高角色，无法查询联盟信息"
+	} else {
+		reply = reply +
+			fmt.Sprintf("联盟等级：%d  (排名 %d )\r\n", rank.LegionLevel, rank.LegionRank) +
+			fmt.Sprintf("联盟战斗力：%s  (每天 %d 币)", prettyNumber(rank.LegionPower), *rank.LegionCoinsPerDay)
+	}
+
+	return reply
+}
+
+func prettyNumber(i int) string {
+	s := strconv.Itoa(i)
+	r1 := ""
+	idx := 0
+
+	// Reverse and interleave the separator.
+	for i = len(s) - 1; i >= 0; i-- {
+		idx++
+		if idx == 4 {
+			idx = 1
+			r1 = r1 + ","
+		}
+		r1 = r1 + string(s[i])
+	}
+
+	// Reverse back and return.
+	r2 := ""
+	for i = len(r1) - 1; i >= 0; i-- {
+		r2 = r2 + string(r1[i])
+	}
+	return r2
 }

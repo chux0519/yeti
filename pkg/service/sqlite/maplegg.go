@@ -9,9 +9,9 @@ import (
 type MapleGG struct {
 	bun.BaseModel `bun:"table:maplegg,alias:m"`
 
-	IGN    string                 `bun:",pk"`
-	Data   map[string]interface{} `bun:"type:json"` // json format raw data
-	Avatar []byte                 `bun:"type:blob"`
+	IGN        string                 `bun:",pk"`
+	Data       map[string]interface{} `bun:"type:json"` // json format raw data
+	ProfileImg []byte                 `bun:"type:blob"`
 
 	CreatedAt string `bun:",nullzero,notnull"` //ISO8601 utc time
 	UpdatedAt string `bun:",nullzero,notnull"`
@@ -20,7 +20,7 @@ type MapleGG struct {
 func (r *YetiSQLiteService) UpsertMapleGG(
 	ign string,
 	data map[string]interface{},
-	avatar []byte,
+	img []byte,
 ) (*MapleGG, error) {
 	exists, err := r.CheckMapleGGByIGN(ign)
 	if err != nil {
@@ -32,25 +32,25 @@ func (r *YetiSQLiteService) UpsertMapleGG(
 			return nil, err
 		}
 		rank.Data = data
-		rank.Avatar = avatar
+		rank.ProfileImg = img
 		return r.UpdateMapleGG(rank)
 	} else {
-		return r.NewMapleGG(ign, data, avatar)
+		return r.NewMapleGG(ign, data, img)
 	}
 }
 
 func (r *YetiSQLiteService) NewMapleGG(
 	ign string,
 	data map[string]interface{},
-	avatar []byte,
+	img []byte,
 ) (*MapleGG, error) {
 	now := time.Now().Format(time.RFC3339)
 	record := &MapleGG{
-		IGN:       ign,
-		Data:      data,
-		Avatar:    avatar,
-		CreatedAt: now,
-		UpdatedAt: now,
+		IGN:        ign,
+		Data:       data,
+		ProfileImg: img,
+		CreatedAt:  now,
+		UpdatedAt:  now,
 	}
 
 	if _, err := r.db.NewInsert().Model(record).Exec(r.ctx); err != nil {

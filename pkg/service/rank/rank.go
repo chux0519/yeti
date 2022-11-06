@@ -21,8 +21,11 @@ func NewYetiRankService(s *sqlite.YetiSQLiteService) *YetiRankService {
 
 func (r *YetiRankService) FetchUserRank(ign string) (*RankData, error) {
 	record, err := r.S.GetMapleGGByIGN(ign)
+
 	if err != nil {
-		return nil, err
+		if !strings.Contains(err.Error(), "no rows in result set") {
+			return nil, err
+		}
 	}
 
 	if record != nil && strings.EqualFold(record.IGN, ign) {
@@ -52,7 +55,7 @@ func (r *YetiRankService) FetchUserRank(ign string) (*RankData, error) {
 			return nil, err
 		}
 
-		// TODO: fetch the avatar bytes
+		// TODO: construct profile image
 		// upsert
 		_, err = r.S.UpsertMapleGG(ign, data, []byte("test"))
 		if err != nil {

@@ -40,4 +40,5 @@ func MgetaHanlder(event map[string]interface{}, cq *cqhttp.YetiCQHTTPService, r 
 	}
 
 	// compute eta
+	hLog.Debug(rank.GetRankReplyString())
 }
