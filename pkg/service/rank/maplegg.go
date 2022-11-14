@@ -140,8 +140,8 @@ func (rank *RankData) GetExpChart() (*chart.BarChart, error) {
 				Right:  40,
 			},
 		},
-		Height:   512,
-		BarWidth: 60,
+		Height:   640,
+		BarWidth: 40,
 		Bars:     bars,
 	}
 
@@ -201,11 +201,11 @@ func (rank *RankData) GetProfileImage() ([]byte, error) {
 		if _, err := fontCtx.DrawString(label, pt); err != nil {
 			return err
 		}
-		textPadding += 40
+		textPadding += 35
 		return nil
 	}
 
-	replyStr := rank.GetRankReplyString()
+	replyStr := rank.GetRankReplyString() + "\r\n" + rank.GetEtaString()
 	labels := strings.Split(replyStr, "\r\n")
 	for _, label := range labels {
 		if err := addLabel(label); err != nil {
@@ -261,10 +261,10 @@ func (rank *RankData) GetRankReplyString() string {
 }
 
 func (rank *RankData) GetEtaString() string {
-	var reply string = ""
+	var reply string
 
 	// 1, 3, 7
-	days := []int{1, 3, 7}
+	days := []int{3}
 	currentExp := rank.GraphData[len(rank.GraphData)-2].TotalOverallEXP
 	for _, day := range days {
 		diff := rank.getAvgDiff(day)
@@ -274,23 +274,38 @@ func (rank *RankData) GetEtaString() string {
 
 		eta := float64(nextGapLvlExp-currentExp) / diff
 
-		reply += fmt.Sprintf("按最近 %d 天的肝度估算，需要 %.2f 天到 %d 级", day, eta, nextGapLvl)
-
+		reply += "ETA to Level\r\n"
+		reply += fmt.Sprintf("Lv. %d ( %.2f days)\r\n", nextGapLvl, eta)
+		// reply += fmt.Sprintf("按最近 %d 天的肝度估算，需要 %.2f 天到 %d 级", day, eta, nextGapLvl)
 		if nextGapLvl < 250 {
 			eta := float64(EXP[250]-currentExp) / diff
-			reply += fmt.Sprintf("，需要 %.2f 天到 %d 级", eta, 250)
+			reply += fmt.Sprintf("Lv. %d ( %.2f days)\r\n", 250, eta)
 		} else if nextGapLvl < 275 {
 			eta := float64(EXP[275]-currentExp) / diff
-			reply += fmt.Sprintf("，需要 %.2f 天到 %d 级", eta, 275)
+			reply += fmt.Sprintf("Lv. %d ( %.2f days)\r\n", 275, eta)
 		} else if nextGapLvl < 280 {
 			eta := float64(EXP[280]-currentExp) / diff
-			reply += fmt.Sprintf("，需要 %.2f 天到 %d 级", eta, 280)
+			reply += fmt.Sprintf("Lv. %d ( %.2f days)\r\n", 280, eta)
 		} else if nextGapLvl < 300 {
 			eta := float64(EXP[300]-currentExp) / diff
-			reply += fmt.Sprintf("，需要 %.2f 天到 %d 级", eta, 300)
+			reply += fmt.Sprintf("Lv. %d ( %.2f days)\r\n", 300, eta)
 		}
-
-		reply += "\r\n"
+		var dailyExp string
+		if diff < 1000 {
+			dailyExp = prettyNumber(int(diff))
+		} else if diff < 1000000 {
+			// k
+			dailyExp = prettyNumber(int(diff/1000)) + " k"
+		} else if diff < 1000000000 {
+			// m
+			dailyExp = prettyNumber(int(diff/1000000)) + " m"
+		} else if diff < 1000000000000 {
+			// b
+			dailyExp = prettyNumber(int(diff/1000000000)) + " b"
+		} else {
+			dailyExp = prettyNumber(int(diff/1000000000000)) + " t"
+		}
+		reply += fmt.Sprintf("Avg Daily Exp On %d Day(s): %s\r\n", day, dailyExp)
 	}
 
 	return reply

@@ -3,14 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"path"
 	"strings"
 
 	"github.com/chux0519/yeti/pkg/service/cqhttp"
 	"github.com/chux0519/yeti/pkg/service/rank"
 )
 
-func MgetaHanlder(event map[string]interface{}, cq *cqhttp.YetiCQHTTPService, r *rank.YetiRankService) {
+func MgHanlder(event map[string]interface{}, cq *cqhttp.YetiCQHTTPService, r *rank.YetiRankService) {
 	bytes, err := json.Marshal(event)
 	if err != nil {
 		hLog.Error(err)
@@ -42,12 +41,10 @@ func MgetaHanlder(event map[string]interface{}, cq *cqhttp.YetiCQHTTPService, r 
 	}
 
 	profileFile := r.GetProfileImageName(rank)
-	etaStr := rank.GetEtaString()
 
 	hLog.Debug(profileFile)
-	hLog.Debug(etaStr)
 
-	reply := fmt.Sprintf("[CQ:image,file=%s] %s", path.Base(profileFile), etaStr)
+	reply := fmt.Sprintf("[CQ:image,file=file://%s]", profileFile)
 
 	hLog.Debug(reply)
 

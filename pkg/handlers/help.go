@@ -20,10 +20,10 @@ func HelpHanlder(event map[string]interface{}, cq *cqhttp.YetiCQHTTPService) {
 		return
 	}
 
-	reply := "支持的指令: " +
+	reply := "支持的指令: \r\n" +
 		"/help: 获取帮助\r\n" +
 		"/roll: roll 点\r\n" +
-		"/mgeta $IGN: 查询角色进度( maple gg eta )\r\n"
+		"/mg $IGN: 查询角色进度( 数据来源 maplestory.gg )\r\n"
 
 	cq.SendGroupMessage(gmsg.GroupId, reply)
 }
