@@ -112,10 +112,28 @@ func GetGMSRankRaw(ign string) ([]byte, error) {
 	return content, nil
 }
 
+func (rank *RankData) getLastNDaysGraphData(n int) []GraphDataItem {
+	now := time.Now()
+	now = now.Truncate(24 * time.Hour)
+
+	var ret []GraphDataItem
+	for _, data := range rank.GraphData {
+		d := data
+		ts := time.Unix(data.ImportTime, 0)
+		diffHours := now.Sub(ts).Hours()
+		diffTimeDays := int(diffHours / 24)
+		if diffTimeDays < n && diffHours >= 0 {
+			ret = append(ret, d)
+		}
+	}
+
+	return ret
+}
+
 func (rank *RankData) GetExpChart() (*chart.BarChart, error) {
 	bars := []chart.Value{}
 
-	for _, data := range rank.GraphData[7:14] {
+	for _, data := range rank.getLastNDaysGraphData(7) {
 		barStyle := chart.Style{
 			FillColor:   chart.ColorBlue,
 			StrokeColor: chart.ColorBlue,
@@ -265,7 +283,7 @@ func (rank *RankData) GetEtaString() string {
 
 	// 1, 3, 7
 	days := []int{3}
-	currentExp := rank.GraphData[len(rank.GraphData)-2].TotalOverallEXP
+	currentExp := rank.getLastNDaysGraphData(1)[0].TotalOverallEXP
 	for _, day := range days {
 		diff := rank.getAvgDiff(day)
 
@@ -329,7 +347,7 @@ func (rank *RankData) getAvgDiff(day int) float64 {
 		return 0
 	}
 	var diff int64 = 0
-	for _, data := range rank.GraphData[len(rank.GraphData)-1-day : 14] {
+	for _, data := range rank.getLastNDaysGraphData(day) {
 		diff += data.EXPDifference
 	}
 	return float64(diff) / float64(day)
