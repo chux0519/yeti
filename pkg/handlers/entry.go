@@ -20,13 +20,14 @@ func EntryHandler(event map[string]interface{}, cq *cqhttp.YetiCQHTTPService, r 
 
 	if ok {
 		hLog.Debug(event)
-		if strings.HasPrefix(msg, PREFIX_HELP) {
+		lowerMsg := strings.ToLower(msg)
+		if strings.HasPrefix(lowerMsg, PREFIX_HELP) {
 			HelpHanlder(event, cq)
 		}
-		if strings.HasPrefix(msg, PREFIX_ROLL) {
+		if strings.HasPrefix(lowerMsg, PREFIX_ROLL) {
 			RollHanlder(event, cq)
 		}
-		if strings.HasPrefix(msg, PREFIX_MG) {
+		if strings.HasPrefix(lowerMsg, PREFIX_MG) {
 			MgHanlder(event, cq, r)
 		}
 	}
