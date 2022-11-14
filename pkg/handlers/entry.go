@@ -10,6 +10,7 @@ import (
 const (
 	PREFIX_ROLL  = "/roll"
 	PREFIX_MGETA = "/mgeta"
+	PREFIX_HELP  = "/help"
 )
 
 func EntryHandler(event map[string]interface{}, cq *cqhttp.YetiCQHTTPService, r *rank.YetiRankService) {
@@ -19,6 +20,9 @@ func EntryHandler(event map[string]interface{}, cq *cqhttp.YetiCQHTTPService, r 
 
 	if ok {
 		hLog.Debug(event)
+		if strings.HasPrefix(msg, PREFIX_HELP) {
+			HelpHanlder(event, cq)
+		}
 		if strings.HasPrefix(msg, PREFIX_ROLL) {
 			RollHanlder(event, cq)
 		}
