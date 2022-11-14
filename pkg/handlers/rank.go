@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
+	"path"
 	"strings"
 
 	"github.com/chux0519/yeti/pkg/service/cqhttp"
@@ -40,10 +42,14 @@ func MgetaHanlder(event map[string]interface{}, cq *cqhttp.YetiCQHTTPService, r 
 	}
 
 	profileFile := r.GetProfileImageName(rank)
-
-	// compute eta
 	etaStr := rank.GetEtaString()
 
 	hLog.Debug(profileFile)
 	hLog.Debug(etaStr)
+
+	reply := fmt.Sprintf("[CQ:image,file=%s] %s", path.Base(profileFile), etaStr)
+
+	hLog.Debug(reply)
+
+	cq.SendGroupMessage(gmsg.GroupId, reply)
 }
