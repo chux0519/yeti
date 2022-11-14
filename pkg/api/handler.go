@@ -20,7 +20,7 @@ func NewYetiHandler(config *config.ServerConfig) *YetiHandler {
 	if err != nil {
 		serverLog.Fatal(err)
 	}
-	r := rank.NewYetiRankService(s)
+	r := rank.NewYetiRankService(s, config)
 
 	return &YetiHandler{config, cq, r}
 }

@@ -4,6 +4,7 @@ debug = true
 [cqhttp]
 host = "http://127.0.0.1:15700"
 accesstoken = "xxxxxxxx"
+cachedir = "/data/cache"
 
 [db]
 file = "yeti.db"

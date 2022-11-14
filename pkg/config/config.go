@@ -15,6 +15,7 @@ type ServerConfig struct {
 	CQHTTP struct {
 		Host        string
 		AccessToken string
+		CacheDir    string
 	} `mapstructure:",remain"`
 
 	DB struct {

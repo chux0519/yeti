@@ -39,6 +39,11 @@ func MgetaHanlder(event map[string]interface{}, cq *cqhttp.YetiCQHTTPService, r 
 		return
 	}
 
+	profileFile := r.GetProfileImageName(rank)
+
 	// compute eta
-	hLog.Debug(rank.GetRankReplyString())
+	etaStr := rank.GetEtaString()
+
+	hLog.Debug(profileFile)
+	hLog.Debug(etaStr)
 }

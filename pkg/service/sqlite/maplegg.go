@@ -111,14 +111,10 @@ func (r *YetiSQLiteService) GetMapleGGByIGN(ign string) (*MapleGG, error) {
 }
 
 func (r *YetiSQLiteService) CheckMapleGGByIGN(ign string) (bool, error) {
-	now := time.Now()
-	expireTime := now.Add(-8 * time.Hour)
-
 	var rank MapleGG
 
 	return r.db.NewSelect().
 		Model(&rank).
 		Where("m.ign = ?", ign).
-		Where("m.updated_at > ?", expireTime.Format(time.RFC3339)).
 		Exists(r.ctx)
 }
