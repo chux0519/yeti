@@ -2,6 +2,7 @@ package rank
 
 import (
 	"bytes"
+	"crypto/tls"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -21,7 +22,8 @@ func httpGet(fullUrl string) ([]byte, error) {
 		transport := &http.Transport{Proxy: http.ProxyURL(proxyURL)}
 		client = &http.Client{Transport: transport}
 	}
-
+	// avatar server insecure
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	req, err := http.NewRequest(http.MethodGet, fullUrl, bytes.NewBuffer([]byte("")))
 	if err != nil {
 		return nil, err

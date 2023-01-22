@@ -42,6 +42,10 @@ var (
 	}
 )
 
+type RankDataV2 struct {
+	CharacterData RankData
+}
+
 type RankData struct {
 	CharacterImageURL  string
 	Class              string
@@ -91,18 +95,18 @@ func GetGMSRank(ign string) (*RankData, error) {
 		return nil, err
 	}
 
-	rank := RankData{}
+	rank := RankDataV2{}
 	err = json.Unmarshal(content, &rank)
 	if err != nil {
 		fmt.Printf("Failed to decode rank: %s", err.Error())
 		fmt.Printf("data: %s", string(content))
 		return nil, err
 	}
-	return &rank, nil
+	return &rank.CharacterData, nil
 }
 
 func GetGMSRankRaw(ign string) ([]byte, error) {
-	url := "https://api.maplestory.gg/v1/public/character/gms/" + ign
+	url := "https://api.maplestory.gg/v2/public/character/gms/" + ign
 	content, err := httpGet(url)
 	if err != nil {
 		fmt.Printf("Failed to get rank: %s", err.Error())
