@@ -8,6 +8,7 @@ import (
 	"image/draw"
 	"image/png"
 	"io/ioutil"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -148,7 +149,7 @@ func (rank *RankData) GetExpChart() (*chart.BarChart, error) {
 
 		v := chart.Value{
 			Value: exp,
-			Label: fmt.Sprintf("%s\n(%.2f b)", dateTime.Format("2006-01-02"), exp),
+			Label: fmt.Sprintf("%s\n(%s)", dateTime.Format("2006-01-02"), prettyNumber(float64(data.EXPDifference), "")),
 			Style: barStyle,
 		}
 		bars = append(bars, v)
@@ -323,7 +324,7 @@ func (rank *RankData) GetEtaString() string {
 			eta := float64(EXP[300]-currentExp) / diff
 			reply += fmt.Sprintf("Lv. %d ( %.2f days)\r\n", 300, eta)
 		}
-		dailyExp := prettyNumber(diff)
+		dailyExp := prettyNumber(diff, "")
 		reply += fmt.Sprintf("Avg Daily Exp On %d Day(s): %s\r\n", day, dailyExp)
 	}
 
@@ -377,33 +378,42 @@ func prettyNumberInt(i int) string {
 	return r2
 }
 
-func prettyNumber(diff float64) string {
+func prettyNumber(diff float64, suffix string) string {
 	var remain float64
 	var base float64
-	var suffix string
 	if diff < 1000 {
 		remain = diff - float64(int(diff))
 	} else if diff < 1000000 {
 		// k
-		suffix = "k"
+		if suffix == "" {
+			suffix = "k"
+		}
 		base = diff / 1000
 		remain = base - float64(int(base))
 	} else if diff < 1000000000 {
 		// m
-		suffix = "m"
+		if suffix == "" {
+			suffix = "m"
+		}
 		base = diff / 1000000
 		remain = base - float64(int(base))
 	} else if diff < 1000000000000 {
 		// b
-		suffix = "b"
+		if suffix == "" {
+			suffix = "b"
+		}
 		base = diff / 1000000000
 		remain = base - float64(int(base))
 	} else {
-		suffix = "t"
+		if suffix == "" {
+			suffix = "t"
+		}
 		base = diff / 1000000000000
 		remain = base - float64(int(base))
 	}
 	exp := prettyNumberInt(int(base))
+
+	remain = math.Floor(remain*100) / 100
 	remainStr := fmt.Sprintf("%.2f", remain)
 	remainStrArr := strings.Split(remainStr, ".")
 	point := remainStrArr[len(remainStrArr)-1]
