@@ -276,10 +276,21 @@ func (rank *RankData) GetRankReplyString() string {
 		reply = reply +
 			"Legion\r\n" +
 			fmt.Sprintf("Level: %d  (Rank %d )\r\n", rank.LegionLevel, rank.LegionRank) +
-			fmt.Sprintf("Power: %s  (%d Coins/Day)", prettyNumber(rank.LegionPower), *rank.LegionCoinsPerDay)
+			fmt.Sprintf("Power: %s  (%d Coins/Day)", prettyNumberInt(rank.LegionPower), *rank.LegionCoinsPerDay)
 	}
 
 	return reply
+}
+
+func (rank *RankData) getCurrentEXP() int64 {
+	var currentExp int64 = 0
+	for _, data := range rank.GraphData {
+		if data.TotalOverallEXP > currentExp {
+			currentExp = data.TotalOverallEXP
+		}
+	}
+
+	return currentExp
 }
 
 func (rank *RankData) GetEtaString() string {
@@ -287,7 +298,7 @@ func (rank *RankData) GetEtaString() string {
 
 	// 1, 3, 7
 	days := []int{3}
-	currentExp := rank.getLastNDaysGraphData(1)[0].TotalOverallEXP
+	currentExp := rank.getCurrentEXP()
 	for _, day := range days {
 		diff := rank.getAvgDiff(day)
 
@@ -312,21 +323,7 @@ func (rank *RankData) GetEtaString() string {
 			eta := float64(EXP[300]-currentExp) / diff
 			reply += fmt.Sprintf("Lv. %d ( %.2f days)\r\n", 300, eta)
 		}
-		var dailyExp string
-		if diff < 1000 {
-			dailyExp = prettyNumber(int(diff))
-		} else if diff < 1000000 {
-			// k
-			dailyExp = prettyNumber(int(diff/1000)) + " k"
-		} else if diff < 1000000000 {
-			// m
-			dailyExp = prettyNumber(int(diff/1000000)) + " m"
-		} else if diff < 1000000000000 {
-			// b
-			dailyExp = prettyNumber(int(diff/1000000000)) + " b"
-		} else {
-			dailyExp = prettyNumber(int(diff/1000000000000)) + " t"
-		}
+		dailyExp := prettyNumber(diff)
 		reply += fmt.Sprintf("Avg Daily Exp On %d Day(s): %s\r\n", day, dailyExp)
 	}
 
@@ -357,7 +354,7 @@ func (rank *RankData) getAvgDiff(day int) float64 {
 	return float64(diff) / float64(day)
 }
 
-func prettyNumber(i int) string {
+func prettyNumberInt(i int) string {
 	s := strconv.Itoa(i)
 	r1 := ""
 	idx := 0
@@ -378,4 +375,38 @@ func prettyNumber(i int) string {
 		r2 = r2 + string(r1[i])
 	}
 	return r2
+}
+
+func prettyNumber(diff float64) string {
+	var remain float64
+	var base float64
+	var suffix string
+	if diff < 1000 {
+		remain = diff - float64(int(diff))
+	} else if diff < 1000000 {
+		// k
+		suffix = "k"
+		base = diff / 1000
+		remain = base - float64(int(base))
+	} else if diff < 1000000000 {
+		// m
+		suffix = "m"
+		base = diff / 1000000
+		remain = base - float64(int(base))
+	} else if diff < 1000000000000 {
+		// b
+		suffix = "b"
+		base = diff / 1000000000
+		remain = base - float64(int(base))
+	} else {
+		suffix = "t"
+		base = diff / 1000000000000
+		remain = base - float64(int(base))
+	}
+	exp := prettyNumberInt(int(base))
+	remainStr := fmt.Sprintf("%.2f", remain)
+	remainStrArr := strings.Split(remainStr, ".")
+	point := remainStrArr[len(remainStrArr)-1]
+
+	return fmt.Sprintf("%s.%s %s", exp, point, suffix)
 }
