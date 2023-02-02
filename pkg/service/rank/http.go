@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-func httpGet(fullUrl string) ([]byte, error) {
+func HttpGet(fullUrl string) ([]byte, error) {
 	client := &http.Client{}
 
 	proxyStr := os.Getenv("HTTP_PROXY")

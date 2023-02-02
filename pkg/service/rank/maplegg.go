@@ -108,7 +108,7 @@ func GetGMSRank(ign string) (*RankData, error) {
 
 func GetGMSRankRaw(ign string) ([]byte, error) {
 	url := "https://api.maplestory.gg/v2/public/character/gms/" + ign
-	content, err := httpGet(url)
+	content, err := HttpGet(url)
 	if err != nil {
 		fmt.Printf("Failed to get rank: %s", err.Error())
 		return nil, err
@@ -201,7 +201,7 @@ func (rank *RankData) GetProfileImage() ([]byte, error) {
 	if rank.CharacterImageURL == "" {
 		return nil, fmt.Errorf("invalid avatar")
 	}
-	avatarBytes, _ := httpGet(rank.CharacterImageURL)
+	avatarBytes, _ := HttpGet(rank.CharacterImageURL)
 
 	avartarImg, err := png.Decode(bytes.NewBuffer(avatarBytes))
 	if err != nil {
