@@ -205,8 +205,17 @@ func (rank *RankData) GetProfileImage() ([]byte, error) {
 
 	avartarImg, err := png.Decode(bytes.NewBuffer(avatarBytes))
 	if err != nil {
-		rLog.Error(err)
-		return nil, err
+		// let's try item.AvatarURL
+		if len(rank.GraphData) > 0 {
+			avatarBytes, _ = HttpGet(rank.GraphData[0].AvatarURL)
+			avartarImg, err = png.Decode(bytes.NewBuffer(avatarBytes))
+			if err != nil {
+				rLog.Error(err)
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
 	avatarOffset := image.Pt((infoWidth-avartarImg.Bounds().Dx())/2, avatarTopPadding)
 	draw.Draw(profileImg, avartarImg.Bounds().Add(avatarOffset), avartarImg, image.Point{}, draw.Over)
