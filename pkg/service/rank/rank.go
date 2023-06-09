@@ -49,7 +49,7 @@ func (r *YetiRankService) FetchUserRank(ign string) (*RankData, error) {
 			return nil, err
 		}
 
-		if err := r.saveProfileImageToCache(r.GetProfileImageName(&rank), profileImgBytes); err != nil {
+		if err := r.SaveProfileImageToCache(r.GetProfileImageName(&rank), profileImgBytes); err != nil {
 			rLog.Error(err)
 			return nil, err
 		}
@@ -76,7 +76,7 @@ func (r *YetiRankService) FetchUserRank(ign string) (*RankData, error) {
 			return nil, err
 		}
 
-		if err := r.saveProfileImageToCache(r.GetProfileImageName(rank), profileImgBytes); err != nil {
+		if err := r.SaveProfileImageToCache(r.GetProfileImageName(rank), profileImgBytes); err != nil {
 			rLog.Error(err)
 			return nil, err
 		}
@@ -94,7 +94,7 @@ func (r *YetiRankService) GetProfileImageName(rank *RankData) string {
 	return filepath.Join(r.Config.CQHTTP.CacheDir, fmt.Sprintf("user_profile_%s.png", rank.Name))
 }
 
-func (r *YetiRankService) saveProfileImageToCache(fileName string, bytes []byte) error {
+func (r *YetiRankService) SaveProfileImageToCache(fileName string, bytes []byte) error {
 	out, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err

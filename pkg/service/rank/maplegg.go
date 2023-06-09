@@ -207,11 +207,24 @@ func (rank *RankData) GetProfileImage() ([]byte, error) {
 	if err != nil {
 		// let's try item.AvatarURL
 		if len(rank.GraphData) > 0 {
-			avatarBytes, _ = HttpGet(rank.GraphData[0].AvatarURL)
-			avartarImg, err = png.Decode(bytes.NewBuffer(avatarBytes))
-			if err != nil {
-				rLog.Error(err)
-				return nil, err
+			avatarOK := false
+			for i := len(rank.GraphData) - 1; i >= 0; i-- {
+				avatarBytes, _ = HttpGet(rank.GraphData[i].AvatarURL)
+				avartarImg, err = png.Decode(bytes.NewBuffer(avatarBytes))
+				if err == nil {
+					avatarOK = true
+					println(rank.GraphData[i].AvatarURL)
+					break
+				}
+			}
+			if !avatarOK {
+				// use default avatar
+				defaultAvatar := "https://i.imgur.com/Kiaw8yk.png"
+				avatarBytes, _ = HttpGet(defaultAvatar)
+				avartarImg, err = png.Decode(bytes.NewBuffer(avatarBytes))
+				if err != nil {
+					return nil, err
+				}
 			}
 		} else {
 			return nil, err

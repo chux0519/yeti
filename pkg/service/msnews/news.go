@@ -31,6 +31,7 @@ type NewsItem struct {
 }
 
 // TODO: check in 10 mins(rss has 5 mins cache by default)
+// use a redis to cache if we push the news or not
 // push to configured groups
 func CheckMapleNews(url string) (*[]NewsItem, error) {
 	data, err := rank.HttpGet(url)
@@ -50,8 +51,8 @@ func CheckMapleNews(url string) (*[]NewsItem, error) {
 		pubTime, err := time.Parse(time.RFC3339, item.DatePublushed)
 		if err == nil {
 			now := time.Now()
-			diffMins := now.Sub(pubTime).Minutes()
-			if diffMins < 10 {
+			diffHours := now.Sub(pubTime).Hours()
+			if diffHours < 8 {
 				ret = append(ret, item)
 			}
 		}
