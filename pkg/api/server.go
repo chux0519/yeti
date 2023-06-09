@@ -90,6 +90,7 @@ func (k *YetiServer) InitHandlers() {
 
 	k.e.POST("/", k.h.EntryHandler)
 
+	k.e.GET("/rank", k.h.LilygoRankHandler)
 }
 
 func (k *YetiServer) Serve() {

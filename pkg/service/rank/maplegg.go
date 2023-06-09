@@ -442,3 +442,152 @@ func prettyNumber(diff float64, suffix string) string {
 
 	return fmt.Sprintf("%s.%s %s", exp, point, suffix)
 }
+
+// lilygo
+
+func (rank *RankData) GetExpChartGo() (*chart.BarChart, error) {
+	bars := []chart.Value{}
+
+	yValues := []float64{}
+	xValues := []float64{}
+	for i, data := range rank.getLastNDaysGraphData(7) {
+		barStyle := chart.Style{
+			FillColor:   chart.ColorBlue,
+			StrokeColor: chart.ColorTransparent,
+			StrokeWidth: 0,
+		}
+		exp := float64(data.EXPDifference) / 1000000000.0
+		dateTime := time.Unix(data.ImportTime, 0)
+
+		v := chart.Value{
+			Value: exp,
+			Label: fmt.Sprintf("%s\n(%s)", dateTime.Format("2006-01-02"), prettyNumber(float64(data.EXPDifference), "")),
+			Style: barStyle,
+		}
+		bars = append(bars, v)
+		yValues = append(yValues, exp)
+		xValues = append(xValues, float64(i))
+	}
+
+	graph := chart.BarChart{
+		Background: chart.Style{
+			Padding: chart.Box{
+				Top:    10,
+				Bottom: 10,
+				Right:  10,
+			},
+		},
+		Width:    320 - 96,
+		Height:   170,
+		BarWidth: 12,
+		Bars:     bars,
+		YAxis:    chart.HideYAxis(),
+	}
+
+	// graph := chart.Chart{
+	// 	Series: []chart.Series{
+	// 		chart.ContinuousSeries{
+	// 			Style: chart.Style{
+	// 				StrokeColor: chart.GetDefaultColor(0).WithAlpha(64),
+	// 				FillColor:   chart.GetDefaultColor(0).WithAlpha(64),
+	// 			},
+	// 			XValues: xValues,
+	// 			YValues: yValues,
+	// 		},
+	// 	},
+	// 	Width:          320 - 96,
+	// 	Height:         170,
+	// 	XAxis:          chart.HideXAxis(),
+	// 	YAxis:          chart.HideYAxis(),
+	// 	YAxisSecondary: chart.HideYAxis(),
+	// }
+
+	return &graph, nil
+}
+
+func (rank *RankData) GetProfileImageGo() (image.Image, error) {
+	// exp chart
+	expChart, err := rank.GetExpChartGo()
+	if err != nil {
+		rLog.Error(err)
+		return nil, err
+	}
+
+	infoWidth := 96
+	w := expChart.GetWidth() + infoWidth
+	h := expChart.GetHeight()
+
+	fontCtx := freetype.NewContext()
+	fontCtx.SetDPI(92)
+	font, err := chart.GetDefaultFont()
+	if err != nil {
+		rLog.Error(err)
+		return nil, err
+	}
+	fontCtx.SetFont(font)
+
+	// bg
+	profileImg := image.NewRGBA(image.Rect(0, 0, w, h))
+	draw.Draw(profileImg, profileImg.Bounds(), &image.Uniform{chart.ColorLightGray}, image.Point{}, draw.Src)
+
+	// add avatar
+	avatarTopPadding := 0
+	if rank.CharacterImageURL == "" {
+		return nil, fmt.Errorf("invalid avatar")
+	}
+	avatarBytes, _ := HttpGet(rank.CharacterImageURL)
+
+	avartarImg, err := png.Decode(bytes.NewBuffer(avatarBytes))
+	if err != nil {
+		// let's try item.AvatarURL
+		if len(rank.GraphData) > 0 {
+			avatarOK := false
+			for i := len(rank.GraphData) - 1; i >= 0; i-- {
+				avatarBytes, _ = HttpGet(rank.GraphData[i].AvatarURL)
+				avartarImg, err = png.Decode(bytes.NewBuffer(avatarBytes))
+				if err == nil {
+					avatarOK = true
+					println(rank.GraphData[i].AvatarURL)
+					break
+				}
+			}
+			if !avatarOK {
+				// use default avatar
+				defaultAvatar := "https://i.imgur.com/Kiaw8yk.png"
+				avatarBytes, _ = HttpGet(defaultAvatar)
+				avartarImg, err = png.Decode(bytes.NewBuffer(avatarBytes))
+				if err != nil {
+					return nil, err
+				}
+			}
+		} else {
+			return nil, err
+		}
+	}
+	avatarOffset := image.Pt((infoWidth-avartarImg.Bounds().Dx())/2, avatarTopPadding)
+	draw.Draw(profileImg, avartarImg.Bounds().Add(avatarOffset), avartarImg, image.Point{}, draw.Over)
+
+	// exp chart
+	expChartBuffer := bytes.NewBuffer([]byte{})
+	if err = expChart.Render(chart.PNG, expChartBuffer); err != nil {
+		rLog.Error(err)
+		return nil, err
+	}
+
+	expImg, err := png.Decode(expChartBuffer)
+	if err != nil {
+		rLog.Error(err)
+		return nil, err
+	}
+	draw.Draw(profileImg, expImg.Bounds().Add(image.Pt(infoWidth, 0)), expImg, image.Point{}, draw.Over)
+
+	buffer := bytes.NewBuffer([]byte{})
+
+	err = png.Encode(buffer, profileImg)
+	if err != nil {
+		rLog.Error(err)
+		return nil, err
+	}
+
+	return png.Decode(buffer)
+}
