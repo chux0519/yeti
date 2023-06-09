@@ -304,7 +304,7 @@ func (rank *RankData) GetProfileImage() ([]byte, error) {
 		errorMsg := "NO DATA"
 		errorMsgOffset := image.Pt(expChartDefaultW/2, h/2)
 
-		pt := freetype.Pt(errorMsgOffset.X-int(fontCtx.PointToFixed(fontSize)>>6)*len(errorMsg)/2, errorMsgOffset.Y-int(fontCtx.PointToFixed(fontSize)>>6))
+		pt := freetype.Pt(errorMsgOffset.X-100, errorMsgOffset.Y-int(fontCtx.PointToFixed(fontSize)>>6))
 		if _, err := fontCtx.DrawString(errorMsg, pt); err != nil {
 			return nil, err
 		}
