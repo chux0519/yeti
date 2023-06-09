@@ -14,7 +14,9 @@ import (
 	"time"
 
 	"github.com/golang/freetype"
+	"github.com/golang/freetype/truetype"
 	"github.com/wcharczuk/go-chart"
+	"golang.org/x/image/font/gofont/goregular"
 )
 
 var (
@@ -131,7 +133,6 @@ func (rank *RankData) getLastNDaysGraphData(n int) []GraphDataItem {
 			ret = append(ret, d)
 		}
 	}
-
 	return ret
 }
 
@@ -155,6 +156,10 @@ func (rank *RankData) GetExpChart() (*chart.BarChart, error) {
 		bars = append(bars, v)
 	}
 
+	if len(bars) == 0 {
+		return nil, fmt.Errorf("no data recently")
+	}
+
 	graph := chart.BarChart{
 		Background: chart.Style{
 			Padding: chart.Box{
@@ -175,13 +180,20 @@ func (rank *RankData) GetProfileImage() ([]byte, error) {
 	// exp chart
 	expChart, err := rank.GetExpChart()
 	if err != nil {
-		rLog.Error(err)
-		return nil, err
+		rLog.Warn(err)
 	}
 
 	infoWidth := 400
-	w := expChart.GetWidth() + infoWidth
-	h := expChart.GetHeight()
+	expChartDefaultW := 1024
+	expChartDefaultH := 640
+
+	var h int = expChartDefaultH
+	var w int = expChartDefaultW + infoWidth
+
+	if expChart != nil {
+		w = expChart.GetWidth() + infoWidth
+		h = expChart.GetHeight()
+	}
 
 	fontCtx := freetype.NewContext()
 	fontCtx.SetDPI(92)
@@ -253,25 +265,51 @@ func (rank *RankData) GetProfileImage() ([]byte, error) {
 	replyStr := rank.GetRankReplyString() + "\r\n" + rank.GetEtaString()
 	labels := strings.Split(replyStr, "\r\n")
 	for _, label := range labels {
-		if err := addLabel(label); err != nil {
-			rLog.Error(err)
-			return nil, err
+		if label != "" {
+			rLog.Debug(label)
+			if err := addLabel(label); err != nil {
+				rLog.Error(err)
+				return nil, err
+			}
 		}
 	}
 
 	// exp chart
-	expChartBuffer := bytes.NewBuffer([]byte{})
-	if err = expChart.Render(chart.PNG, expChartBuffer); err != nil {
-		rLog.Error(err)
-		return nil, err
-	}
+	if expChart != nil {
+		expChartBuffer := bytes.NewBuffer([]byte{})
+		if err = expChart.Render(chart.PNG, expChartBuffer); err != nil {
+			rLog.Error(err)
+			return nil, err
+		}
+		expImg, err := png.Decode(expChartBuffer)
+		if err != nil {
+			rLog.Error(err)
+			return nil, err
+		}
+		draw.Draw(profileImg, expImg.Bounds().Add(image.Pt(infoWidth, 0)), expImg, image.Point{}, draw.Over)
+	} else {
+		font, _ := truetype.Parse(goregular.TTF)
+		fontCtx.SetFont(font)
 
-	expImg, err := png.Decode(expChartBuffer)
-	if err != nil {
-		rLog.Error(err)
-		return nil, err
+		// draw label
+		emptyImg := image.NewRGBA(image.Rect(0, 0, expChartDefaultW, expChartDefaultH))
+		draw.Draw(emptyImg, emptyImg.Bounds(), &image.Uniform{chart.ColorWhite}, image.Point{}, draw.Src)
+
+		fontCtx.SetClip(image.Rect(0, 0, expChartDefaultW, h))
+		fontCtx.SetDst(emptyImg)
+		fontSize := 36.0
+		fontCtx.SetFontSize(fontSize)
+		fontCtx.SetSrc(&image.Uniform{chart.ColorLightGray})
+
+		errorMsg := "NO DATA"
+		errorMsgOffset := image.Pt(expChartDefaultW/2, h/2)
+
+		pt := freetype.Pt(errorMsgOffset.X-int(fontCtx.PointToFixed(fontSize)>>6)*len(errorMsg)/2, errorMsgOffset.Y-int(fontCtx.PointToFixed(fontSize)>>6))
+		if _, err := fontCtx.DrawString(errorMsg, pt); err != nil {
+			return nil, err
+		}
+		draw.Draw(profileImg, emptyImg.Bounds().Add(image.Pt(infoWidth, 0)), emptyImg, image.Point{}, draw.Over)
 	}
-	draw.Draw(profileImg, expImg.Bounds().Add(image.Pt(infoWidth, 0)), expImg, image.Point{}, draw.Over)
 
 	buffer := bytes.NewBuffer([]byte{})
 
