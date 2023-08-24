@@ -1,0 +1,40 @@
+## set 
+## - ANDROID_ID 
+## - CQHTTP_ROOT
+## - DB_FILE
+## - CONFIG_FILE
+## - CACHE_DIR
+## in .env file
+## run docker compose config to confirm
+
+x-restart-policy: &restart_policy
+  restart: unless-stopped
+
+services:
+  qsign:
+    <<: *restart_policy
+    image: xzhouqd/qsign:8.9.63 # TCP port 8080
+    environment:
+      - ANDROID_ID=${ANDROID_ID}
+
+  cqhttp:
+    <<: *restart_policy
+    image: ghcr.io/mrs4s/go-cqhttp:1.1.0 # TCP port 25700
+    entrypoint: /app/cqhttp # to share /data with yeti
+    volumes:
+      - "${CQHTTP_ROOT}:/data" # should contains device.json / config.yml / session.token
+      - "${CACHE_DIR}:/cache"
+    depends_on:
+      - qsign
+
+  yeti:
+    <<: *restart_policy
+    image: chux0519/yeti # TCP port 25700
+    volumes:
+      - "${DB_FILE}:/yeti.db"
+      - "${CONFIG_FILE}:/config.toml"
+      - "${CACHE_DIR}:/cache:rw"
+    depends_on:
+      - cqhttp
+
+# docker compose up -d --no-deps yeti cqhttp --force-recreate

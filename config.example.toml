@@ -3,8 +3,11 @@ debug = true
 
 [cqhttp]
 host = "http://127.0.0.1:15700"
-accesstoken = "xxxxxxxx"
-cachedir = "/data/cache"
+accesstoken = ""
+cachedir = ""
 
 [db]
 file = "yeti.db"
+
+[rank]
+defaultavatar="https://i.imgur.com/Kiaw8yk.png"

@@ -2,6 +2,12 @@
 
 is a helper for maplestory
 
+## Deps
+
+```
+go run main.go db init --uri "yeti.db"
+go run main.go db migrate --uri "yeti.db"
+```
 
 ## Features
 
